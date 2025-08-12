@@ -182,7 +182,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('Language'),
               subtitle: const Text('English'),
               trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {},
+              onTap: () {
+                _showLanguageDialog();
+              },
             ),
             ListTile(
               title: const Text('App Integrations'),
@@ -223,22 +225,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               title: const Text('Help Center'),
               trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {},
+              onTap: () {
+                _showHelpDialog();
+              },
             ),
             ListTile(
               title: const Text('Contact Support'),
               trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {},
+              onTap: () {
+                _showContactDialog();
+              },
             ),
             ListTile(
               title: const Text('Privacy Policy'),
               trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {},
+              onTap: () {
+                _showPrivacyDialog();
+              },
             ),
             ListTile(
               title: const Text('Terms of Service'),
               trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {},
+              onTap: () {
+                _showTermsDialog();
+              },
             ),
             const SizedBox(height: 16),
             Center(
@@ -365,6 +375,165 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _showLanguageDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Language'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<String>(
+              title: const Text('English'),
+              value: 'en',
+              groupValue: 'en',
+              onChanged: (value) => Navigator.pop(context),
+            ),
+            RadioListTile<String>(
+              title: const Text('Spanish'),
+              value: 'es',
+              groupValue: 'en',
+              onChanged: (value) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Language support coming soon!')),
+                );
+              },
+            ),
+            RadioListTile<String>(
+              title: const Text('French'),
+              value: 'fr',
+              groupValue: 'en',
+              onChanged: (value) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Language support coming soon!')),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Help Center'),
+        content: const SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Frequently Asked Questions:', style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 8),
+              Text('Q: How do I log my mood?\nA: Go to the Mood tab and select your current feeling.'),
+              SizedBox(height: 8),
+              Text('Q: Can I edit past mood entries?\nA: Yes, tap on any day in the calendar view.'),
+              SizedBox(height: 8),
+              Text('Q: Is my data private?\nA: Yes, all data is stored securely and privately.'),
+              SizedBox(height: 16),
+              Text('Need more help? Contact our support team!'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showContactDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Contact Support'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.email),
+              title: Text('Email Support'),
+              subtitle: Text('support@mindfulme.app'),
+            ),
+            ListTile(
+              leading: Icon(Icons.chat),
+              title: Text('Live Chat'),
+              subtitle: Text('Available 24/7'),
+            ),
+            ListTile(
+              leading: Icon(Icons.phone),
+              title: Text('Phone Support'),
+              subtitle: Text('1-800-MINDFUL'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPrivacyDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Privacy Policy'),
+        content: const SingleChildScrollView(
+          child: Text(
+            'Your privacy is important to us. This app:\n\n'
+            '• Stores your data locally on your device\n'
+            '• Uses encryption for cloud backups\n'
+            '• Never shares personal information\n'
+            '• Allows you to export or delete your data\n\n'
+            'For the full privacy policy, visit our website.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Understood'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTermsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Terms of Service'),
+        content: const SingleChildScrollView(
+          child: Text(
+            'By using MindfulMe, you agree to:\n\n'
+            '• Use the app for personal wellness only\n'
+            '• Not share your account with others\n'
+            '• Understand this is not medical advice\n'
+            '• Seek professional help when needed\n\n'
+            'For complete terms, visit our website.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Understood'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showDeleteAccountDialog() {
     showDialog(
       context: context,
@@ -379,7 +548,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Account deletion cancelled. We\'re glad you\'re staying!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,

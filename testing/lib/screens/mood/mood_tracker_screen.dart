@@ -12,6 +12,10 @@ class MoodTrackerScreen extends StatefulWidget {
 class _MoodTrackerScreenState extends State<MoodTrackerScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  double _currentMoodValue = 3.0;
+  final Set<String> _selectedEmotions = {};
+  final TextEditingController _notesController = TextEditingController();
+  bool _isLogging = false;
 
   @override
   void initState() {
@@ -22,6 +26,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -94,11 +99,27 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
             const SizedBox(height: 16),
             _buildMoodScale(),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                _logMood();
-              },
-              child: const Text('Log Mood'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isLogging ? null : _logMood,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isLogging
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text('Log Mood', style: TextStyle(fontSize: 16)),
+              ),
             ),
           ],
         ),
@@ -120,38 +141,98 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
           ],
         ),
         const SizedBox(height: 12),
-        Slider(
-          value: 3,
-          min: 1,
-          max: 5,
-          divisions: 4,
-          onChanged: (value) {},
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: Theme.of(context).colorScheme.primary,
+            inactiveTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+            thumbColor: Theme.of(context).colorScheme.primary,
+            overlayColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+          ),
+          child: Slider(
+            value: _currentMoodValue,
+            min: 1,
+            max: 5,
+            divisions: 4,
+            label: _getMoodLabel(_currentMoodValue),
+            onChanged: (value) {
+              setState(() {
+                _currentMoodValue = value;
+              });
+            },
+          ),
+        ),
+        Text(
+          _getMoodLabel(_currentMoodValue),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
   }
 
+  String _getMoodLabel(double value) {
+    if (value <= 1.5) return 'Very Low 😢';
+    if (value <= 2.5) return 'Low 😔';
+    if (value <= 3.5) return 'Neutral 😐';
+    if (value <= 4.5) return 'Good 😊';
+    return 'Very Good 😄';
+  }
+
   Widget _buildMoodOption(String emoji, String label, int value) {
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(emoji, style: const TextStyle(fontSize: 24)),
-          ),
+    final isSelected = _currentMoodValue.round() == value;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _currentMoodValue = value.toDouble();
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        child: Column(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
+                    : Colors.grey.shade100,
+                shape: BoxShape.circle,
+                border: isSelected 
+                    ? Border.all(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 2,
+                      )
+                    : null,
+              ),
+              child: Center(
+                child: Text(
+                  emoji, 
+                  style: TextStyle(
+                    fontSize: isSelected ? 28 : 24,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected 
+                    ? Theme.of(context).colorScheme.primary
+                    : null,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-          textAlign: TextAlign.center,
-        ),
-      ],
+      ),
     );
   }
 
@@ -176,10 +257,21 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
               spacing: 8,
               runSpacing: 8,
               children: emotions.map((emotion) {
+                final isSelected = _selectedEmotions.contains(emotion);
                 return FilterChip(
                   label: Text(emotion),
-                  selected: false,
-                  onSelected: (selected) {},
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedEmotions.add(emotion);
+                      } else {
+                        _selectedEmotions.remove(emotion);
+                      }
+                    });
+                  },
+                  selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                  checkmarkColor: Theme.of(context).colorScheme.primary,
                 );
               }).toList(),
             ),
@@ -202,11 +294,19 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
             ),
             const SizedBox(height: 16),
             TextField(
+              controller: _notesController,
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'What\'s on your mind today?',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
                 ),
               ),
             ),
@@ -216,13 +316,64 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
     );
   }
 
-  void _logMood() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Mood logged successfully!'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  Future<void> _logMood() async {
+    setState(() {
+      _isLogging = true;
+    });
+
+    // Simulate API call
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    if (mounted) {
+      setState(() {
+        _isLogging = false;
+      });
+
+      // Show success message with details
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  const Text('Mood logged successfully!'),
+                ],
+              ),
+              if (_selectedEmotions.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Emotions: ${_selectedEmotions.join(', ')}',
+                  style: TextStyle(
+                    fontSize: 12, 
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'View Calendar',
+            textColor: Colors.white,
+            onPressed: () {
+              _tabController.animateTo(1);
+            },
+          ),
+        ),
+      );
+
+      // Clear form
+      setState(() {
+        _currentMoodValue = 3.0;
+        _selectedEmotions.clear();
+        _notesController.clear();
+      });
+    }
   }
 }

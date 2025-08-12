@@ -12,8 +12,10 @@ class MainNavigation extends StatefulWidget {
   State<MainNavigation> createState() => _MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class _MainNavigationState extends State<MainNavigation> with TickerProviderStateMixin {
   int _currentIndex = 0;
+  late PageController _pageController;
+  late AnimationController _animationController;
 
   final List<Widget> _screens = [
     const HomeScreen(),
@@ -24,9 +26,34 @@ class _MainNavigationState extends State<MainNavigation> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        children: _screens,
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
@@ -62,7 +89,16 @@ class _MainNavigationState extends State<MainNavigation> {
     final isSelected = _currentIndex == index;
 
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () {
+        if (_currentIndex != index) {
+          setState(() => _currentIndex = index);
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

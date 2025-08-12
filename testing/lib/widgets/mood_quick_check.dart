@@ -8,8 +8,11 @@ class MoodQuickCheck extends StatefulWidget {
   State<MoodQuickCheck> createState() => _MoodQuickCheckState();
 }
 
-class _MoodQuickCheckState extends State<MoodQuickCheck> {
+class _MoodQuickCheckState extends State<MoodQuickCheck> with TickerProviderStateMixin {
   int? selectedMood;
+  bool _isLoading = false;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
 
   final List<MoodOption> moods = [
     MoodOption(1, '😢', 'Struggling', AppTheme.reflectiveGray),
@@ -18,6 +21,24 @@ class _MoodQuickCheckState extends State<MoodQuickCheck> {
     MoodOption(4, '😊', 'Good', AppTheme.joyfulYellow),
     MoodOption(5, '😄', 'Great', AppTheme.energeticOrange),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,45 +115,75 @@ class _MoodQuickCheckState extends State<MoodQuickCheck> {
     final isSelected = selectedMood == mood.value;
     
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedMood = mood.value;
-        });
-        _showMoodConfirmation(mood);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          color: isSelected ? mood.color : mood.color.withValues(alpha: 0.2),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected 
-                ? Theme.of(context).colorScheme.primary 
-                : Colors.transparent,
-            width: 3,
-          ),
-          boxShadow: isSelected ? [
-            BoxShadow(
-              color: mood.color.withValues(alpha: 0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+      onTap: _isLoading ? null : () => _handleMoodSelection(mood),
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: isSelected ? _scaleAnimation.value : 1.0,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: isSelected ? mood.color : mood.color.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected 
+                      ? Theme.of(context).colorScheme.primary 
+                      : Colors.transparent,
+                  width: 3,
+                ),
+                boxShadow: isSelected ? [
+                  BoxShadow(
+                    color: mood.color.withValues(alpha: 0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ] : null,
+              ),
+              child: Center(
+                child: _isLoading && isSelected
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        mood.emoji,
+                        style: const TextStyle(fontSize: 28),
+                      ),
+              ),
             ),
-          ] : null,
-        ),
-        child: AnimatedScale(
-          scale: isSelected ? 1.1 : 1.0,
-          duration: const Duration(milliseconds: 300),
-          child: Center(
-            child: Text(
-              mood.emoji,
-              style: const TextStyle(fontSize: 28),
-            ),
-          ),
-        ),
+          );
+        },
       ),
     );
+  }
+
+  Future<void> _handleMoodSelection(MoodOption mood) async {
+    setState(() {
+      selectedMood = mood.value;
+      _isLoading = true;
+    });
+
+    _animationController.forward();
+    
+    // Simulate saving mood data
+    await Future.delayed(const Duration(milliseconds: 800));
+    
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      _animationController.reverse();
+      _showMoodConfirmation(mood);
+    }
   }
 
   Widget _buildMoodFeedback() {
@@ -193,12 +244,29 @@ class _MoodQuickCheckState extends State<MoodQuickCheck> {
   void _showMoodConfirmation(MoodOption mood) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Mood logged: ${mood.label}'),
-        duration: const Duration(seconds: 2),
+        content: Row(
+          children: [
+            Text(mood.emoji, style: const TextStyle(fontSize: 20)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text('Mood logged: ${mood.label}'),
+            ),
+            const Icon(Icons.check_circle, color: Colors.white, size: 20),
+          ],
+        ),
+        duration: const Duration(seconds: 3),
         backgroundColor: Theme.of(context).colorScheme.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        action: SnackBarAction(
+          label: 'View Trends',
+          textColor: Colors.white,
+          onPressed: () {
+            // Navigate to mood tracker
+            DefaultTabController.of(context)?.animateTo(1);
+          },
         ),
       ),
     );

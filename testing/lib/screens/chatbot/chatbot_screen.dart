@@ -315,30 +315,75 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _scrollToBottom();
 
     try {
-      // Get bot response
-      final response = await ChatbotService.getChatResponse(message, _messages);
+      // Get bot response with timeout
+      final response = await ChatbotService.getChatResponse(message, _messages)
+          .timeout(const Duration(seconds: 30));
       
-      setState(() {
-        _messages.add({
-          'role': 'assistant',
-          'message': response,
-          'timestamp': DateTime.now().toIso8601String(),
+      if (mounted) {
+        setState(() {
+          _messages.add({
+            'role': 'assistant',
+            'message': response,
+            'timestamp': DateTime.now().toIso8601String(),
+          });
+          _isLoading = false;
         });
-        _isLoading = false;
-      });
-      
-      _scrollToBottom();
+        
+        _scrollToBottom();
+        
+        // Show helpful feedback
+        if (response.length > 200) {
+          _showResponseActions();
+        }
+      }
     } catch (e) {
-      setState(() {
-        _messages.add({
-          'role': 'assistant',
-          'message': 'I apologize, but I\'m having trouble responding right now. Please try again in a moment, or consider reaching out to a healthcare professional if you need immediate support.',
-          'timestamp': DateTime.now().toIso8601String(),
+      if (mounted) {
+        setState(() {
+          _messages.add({
+            'role': 'assistant',
+            'message': 'I apologize, but I\'m having trouble responding right now. Please try again in a moment, or consider reaching out to a healthcare professional if you need immediate support.\n\n💡 You can also try rephrasing your question or asking about specific topics like stress, anxiety, or self-care.',
+            'timestamp': DateTime.now().toIso8601String(),
+          });
+          _isLoading = false;
         });
-        _isLoading = false;
-      });
-      _scrollToBottom();
+        _scrollToBottom();
+      }
     }
+  }
+
+  void _showResponseActions() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Was this response helpful?'),
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'Feedback',
+          onPressed: () {
+            _showFeedbackDialog();
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showFeedbackDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Feedback'),
+        content: const Text('Thank you for using our wellness chat! Your feedback helps us improve.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('👍 Helpful'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('👎 Not helpful'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _scrollToBottom() {
