@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../widgets/mood_calendar.dart';
 import '../../widgets/mood_trends_chart.dart';
+import '../../services/mood_data_service.dart';
+import '../../services/notification_service.dart';
 
 class MoodTrackerScreen extends StatefulWidget {
   const MoodTrackerScreen({super.key});
@@ -21,6 +23,23 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadTodaysMood();
+  }
+
+  Future<void> _loadTodaysMood() async {
+    try {
+      final todaysMood = await MoodDataService.getTodaysMoodEntry();
+      if (todaysMood != null && mounted) {
+        setState(() {
+          _currentMoodValue = todaysMood.moodValue;
+          _selectedEmotions.clear();
+          _selectedEmotions.addAll(todaysMood.emotions);
+          _notesController.text = todaysMood.note;
+        });
+      }
+    } catch (e) {
+      print('Error loading today\'s mood: $e');
+    }
   }
 
   @override
@@ -321,59 +340,43 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
       _isLogging = true;
     });
 
-    // Simulate API call
-    await Future.delayed(const Duration(milliseconds: 1500));
-
-    if (mounted) {
-      setState(() {
-        _isLogging = false;
-      });
-
-      // Show success message with details
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  const Text('Mood logged successfully!'),
-                ],
-              ),
-              if (_selectedEmotions.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Emotions: ${_selectedEmotions.join(', ')}',
-                  style: TextStyle(
-                    fontSize: 12, 
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
-          action: SnackBarAction(
-            label: 'View Calendar',
-            textColor: Colors.white,
-            onPressed: () {
-              _tabController.animateTo(1);
-            },
-          ),
-        ),
+    try {
+      // Save mood data using the service
+      await MoodDataService.saveMoodEntry(
+        moodValue: _currentMoodValue,
+        emotions: _selectedEmotions.toList(),
+        note: _notesController.text.trim(),
       );
 
-      // Clear form
-      setState(() {
-        _currentMoodValue = 3.0;
-        _selectedEmotions.clear();
-        _notesController.clear();
-      });
+      if (mounted) {
+        setState(() {
+          _isLogging = false;
+        });
+
+        // Show success message with details
+        NotificationService.showSuccess(
+          context,
+          'Mood logged successfully!',
+          action: 'View Calendar',
+          onAction: () {
+            _tabController.animateTo(1);
+          },
+        );
+
+        // Don't clear form since user might want to update their mood later
+        // Instead, show that it's been saved
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLogging = false;
+        });
+        
+        NotificationService.showError(
+          context,
+          'Failed to save mood entry. Please try again.',
+        );
+      }
     }
   }
 }

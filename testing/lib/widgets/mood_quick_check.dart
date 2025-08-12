@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../services/mood_data_service.dart';
+import '../services/notification_service.dart';
 
 class MoodQuickCheck extends StatefulWidget {
   const MoodQuickCheck({super.key});
@@ -32,6 +34,20 @@ class _MoodQuickCheckState extends State<MoodQuickCheck> with TickerProviderStat
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+    _loadTodaysMood();
+  }
+
+  Future<void> _loadTodaysMood() async {
+    try {
+      final todaysMood = await MoodDataService.getTodaysMoodEntry();
+      if (todaysMood != null && mounted) {
+        setState(() {
+          selectedMood = todaysMood.moodValue.round();
+        });
+      }
+    } catch (e) {
+      // Silently handle error - it's okay if there's no mood data yet
+    }
   }
 
   @override
@@ -174,15 +190,29 @@ class _MoodQuickCheckState extends State<MoodQuickCheck> with TickerProviderStat
 
     _animationController.forward();
     
-    // Simulate saving mood data
-    await Future.delayed(const Duration(milliseconds: 800));
-    
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-      _animationController.reverse();
-      _showMoodConfirmation(mood);
+    try {
+      // Save mood data using the service
+      await MoodDataService.saveMoodEntry(
+        moodValue: mood.value.toDouble(),
+        emotions: [], // Quick check doesn't include emotions
+        note: '', // Quick check doesn't include notes
+      );
+      
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _animationController.reverse();
+        _showMoodConfirmation(mood);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _animationController.reverse();
+        NotificationService.showError(context, 'Failed to save mood. Please try again.');
+      }
     }
   }
 

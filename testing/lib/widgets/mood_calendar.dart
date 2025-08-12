@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../services/mood_data_service.dart';
+import '../services/notification_service.dart';
+import 'mood_entry_dialog.dart';
 
 class MoodCalendar extends StatefulWidget {
   const MoodCalendar({super.key});
@@ -10,6 +13,41 @@ class MoodCalendar extends StatefulWidget {
 class _MoodCalendarState extends State<MoodCalendar> {
   DateTime _currentMonth = DateTime.now();
   int? _selectedDay;
+  Map<int, MoodEntry> _monthMoodData = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMonthData();
+  }
+
+  Future<void> _loadMonthData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final moodData = await MoodDataService.getMoodEntriesForMonth(
+        _currentMonth.year,
+        _currentMonth.month,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _monthMoodData = moodData;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        NotificationService.showError(context, 'Failed to load mood data');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +87,7 @@ class _MoodCalendarState extends State<MoodCalendar> {
             setState(() {
               _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
             });
+            _loadMonthData();
           },
           icon: const Icon(Icons.chevron_left),
         ),
@@ -66,6 +105,7 @@ class _MoodCalendarState extends State<MoodCalendar> {
             setState(() {
               _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
             });
+            _loadMonthData();
           },
           icon: const Icon(Icons.chevron_right),
         ),
@@ -90,6 +130,7 @@ class _MoodCalendarState extends State<MoodCalendar> {
                 _currentMonth = date;
               });
               Navigator.pop(context);
+              _loadMonthData();
             },
           ),
         ),
@@ -98,7 +139,19 @@ class _MoodCalendarState extends State<MoodCalendar> {
   }
 
   Widget _buildCalendarGrid(BuildContext context) {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    final daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
+    final firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
+    final firstWeekday = firstDayOfMonth.weekday % 7; // Convert to 0-6 where Sunday = 0
     
     return Column(
       children: [
@@ -119,13 +172,16 @@ class _MoodCalendarState extends State<MoodCalendar> {
         ),
         const SizedBox(height: 8),
         // Calendar days
-        ...List.generate(5, (weekIndex) {
+        ...List.generate(6, (weekIndex) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 2),
             child: Row(
               children: List.generate(7, (dayIndex) {
-                final dayNumber = weekIndex * 7 + dayIndex + 1;
-                if (dayNumber > 31) return const Expanded(child: SizedBox());
+                final dayNumber = weekIndex * 7 + dayIndex + 1 - firstWeekday;
+                
+                if (dayNumber <= 0 || dayNumber > daysInMonth) {
+                  return const Expanded(child: SizedBox());
+                }
                 
                 return Expanded(
                   child: _buildCalendarDay(context, dayNumber),
@@ -139,17 +195,9 @@ class _MoodCalendarState extends State<MoodCalendar> {
   }
 
   Widget _buildCalendarDay(BuildContext context, int day) {
-    // Mock mood data based on current month
-    final moodColors = {
-      5: Colors.green.shade200,
-      10: Colors.blue.shade200,
-      15: Colors.orange.shade200,
-      20: Colors.purple.shade200,
-      25: Colors.yellow.shade200,
-    };
-    
-    final hasMood = moodColors.containsKey(day);
-    final moodColor = moodColors[day];
+    final moodEntry = _monthMoodData[day];
+    final hasMood = moodEntry != null;
+    final moodColor = hasMood ? MoodDataService.getMoodColor(moodEntry.moodValue) : null;
     final isToday = _isToday(day);
     final isSelected = _selectedDay == day;
     
@@ -166,7 +214,7 @@ class _MoodCalendarState extends State<MoodCalendar> {
         margin: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: isSelected 
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)
               : hasMood 
                   ? moodColor 
                   : Colors.transparent,
@@ -178,16 +226,27 @@ class _MoodCalendarState extends State<MoodCalendar> {
                   : null,
         ),
         child: Center(
-          child: Text(
-            day.toString(),
-            style: TextStyle(
-              fontWeight: isToday || isSelected
-                  ? FontWeight.bold 
-                  : FontWeight.normal,
-              color: isSelected 
-                  ? Theme.of(context).colorScheme.primary
-                  : null,
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                day.toString(),
+                style: TextStyle(
+                  fontWeight: isToday || isSelected
+                      ? FontWeight.bold 
+                      : FontWeight.normal,
+                  color: isSelected 
+                      ? Theme.of(context).colorScheme.primary
+                      : null,
+                  fontSize: 12,
+                ),
+              ),
+              if (hasMood)
+                Text(
+                  moodEntry.emoji,
+                  style: const TextStyle(fontSize: 12),
+                ),
+            ],
           ),
         ),
       ),
@@ -210,13 +269,15 @@ class _MoodCalendarState extends State<MoodCalendar> {
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 8),
-        Row(
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
           children: [
-            _buildLegendItem('😄', Colors.green.shade200, 'Great'),
-            const SizedBox(width: 16),
-            _buildLegendItem('😊', Colors.blue.shade200, 'Good'),
-            const SizedBox(width: 16),
-            _buildLegendItem('😐', Colors.orange.shade200, 'Okay'),
+            _buildLegendItem('😄', MoodDataService.getMoodColor(5.0), 'Very Good'),
+            _buildLegendItem('😊', MoodDataService.getMoodColor(4.0), 'Good'),
+            _buildLegendItem('😐', MoodDataService.getMoodColor(3.0), 'Neutral'),
+            _buildLegendItem('😔', MoodDataService.getMoodColor(2.0), 'Low'),
+            _buildLegendItem('😢', MoodDataService.getMoodColor(1.0), 'Very Low'),
           ],
         ),
       ],
@@ -249,8 +310,9 @@ class _MoodCalendarState extends State<MoodCalendar> {
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
     
-    // Mock data based on day
-    final moodData = _getMoodDataForDay(day);
+    final moodEntry = _monthMoodData[day];
+    final selectedDate = DateTime(_currentMonth.year, _currentMonth.month, day);
+    final isToday = _isToday(day);
     
     showDialog(
       context: context,
@@ -261,39 +323,67 @@ class _MoodCalendarState extends State<MoodCalendar> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (moodData != null) ...[
+            if (moodEntry != null) ...[
               Row(
                 children: [
-                  Text('Mood: ${moodData['emoji']} ${moodData['mood']}'),
+                  Text('Mood: ${moodEntry.emoji} ${moodEntry.moodLabel}'),
                 ],
               ),
               const SizedBox(height: 8),
-              Text('Emotions: ${moodData['emotions']}'),
+              Text('Emotions: ${moodEntry.emotions.isEmpty ? 'None selected' : moodEntry.emotions.join(', ')}'),
               const SizedBox(height: 8),
-              Text('Note: ${moodData['note']}'),
+              Text('Note: ${moodEntry.note.isEmpty ? 'No note added' : moodEntry.note}'),
             ] else ...[
               const Text('No mood data recorded for this day.'),
               const SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  // Navigate to mood tracker
-                  DefaultTabController.of(context)?.animateTo(1);
-                },
-                child: const Text('Log Mood'),
+              Row(
+                children: [
+                  if (isToday) ...[
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          // Navigate to mood tracker today tab
+                          DefaultTabController.of(context)?.animateTo(0);
+                        },
+                        icon: const Icon(Icons.today, size: 16),
+                        label: const Text('Today Tab'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showAddMoodDialog(context, selectedDate);
+                      },
+                      icon: const Icon(Icons.add, size: 16),
+                      label: Text(isToday ? 'Quick Add' : 'Add Entry'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ],
         ),
         actions: [
-          if (moodData != null)
+          if (moodEntry != null) ...[
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _showEditMoodDialog(context, day);
+                _showEditMoodDialog(context, selectedDate, moodEntry);
               },
               child: const Text('Edit'),
             ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteMoodEntry(selectedDate);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Close'),
@@ -303,57 +393,48 @@ class _MoodCalendarState extends State<MoodCalendar> {
     );
   }
 
-  Map<String, String>? _getMoodDataForDay(int day) {
-    // Mock mood data for certain days
-    final moodData = {
-      5: {
-        'emoji': '😊',
-        'mood': 'Good',
-        'emotions': 'Happy, Grateful',
-        'note': 'Had a productive day at work and enjoyed dinner with friends.',
-      },
-      10: {
-        'emoji': '😐',
-        'mood': 'Neutral',
-        'emotions': 'Calm, Focused',
-        'note': 'Regular day, stayed focused on tasks.',
-      },
-      15: {
-        'emoji': '😔',
-        'mood': 'Low',
-        'emotions': 'Tired, Overwhelmed',
-        'note': 'Feeling a bit overwhelmed with work deadlines.',
-      },
-      20: {
-        'emoji': '😄',
-        'mood': 'Great',
-        'emotions': 'Excited, Energetic',
-        'note': 'Amazing day! Completed a big project and celebrated with friends.',
-      },
-      25: {
-        'emoji': '😊',
-        'mood': 'Good',
-        'emotions': 'Peaceful, Content',
-        'note': 'Spent quality time with family. Feeling grateful.',
-      },
-    };
-    
-    return moodData[day];
-  }
-
-  void _showEditMoodDialog(BuildContext context, int day) {
+  void _showAddMoodDialog(BuildContext context, DateTime date) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Mood Entry'),
-        content: const Text('Mood editing feature coming soon!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
+      builder: (context) => MoodEntryDialog(
+        date: date,
+        onSaved: () {
+          _loadMonthData(); // Refresh the calendar after saving
+        },
       ),
     );
+  }
+
+  void _showEditMoodDialog(BuildContext context, DateTime date, MoodEntry moodEntry) {
+    showDialog(
+      context: context,
+      builder: (context) => MoodEntryDialog(
+        date: date,
+        existingEntry: moodEntry,
+        onSaved: () {
+          _loadMonthData(); // Refresh the calendar after saving
+        },
+      ),
+    );
+  }
+
+  Future<void> _deleteMoodEntry(DateTime date) async {
+    final confirmed = await NotificationService.showConfirmDialog(
+      context,
+      title: 'Delete Mood Entry',
+      message: 'Are you sure you want to delete this mood entry?',
+      confirmText: 'Delete',
+      isDestructive: true,
+    );
+
+    if (confirmed == true) {
+      try {
+        await MoodDataService.deleteMoodEntry(date);
+        await _loadMonthData(); // Refresh the calendar
+        NotificationService.showSuccess(context, 'Mood entry deleted');
+      } catch (e) {
+        NotificationService.showError(context, 'Failed to delete mood entry');
+      }
+    }
   }
 }

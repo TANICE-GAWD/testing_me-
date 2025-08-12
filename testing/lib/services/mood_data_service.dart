@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MoodEntry {
@@ -76,12 +77,27 @@ class MoodDataService {
     required List<String> emotions,
     required String note,
   }) async {
+    final today = DateTime.now();
+    await saveMoodEntryForDate(
+      date: DateTime(today.year, today.month, today.day),
+      moodValue: moodValue,
+      emotions: emotions,
+      note: note,
+    );
+  }
+
+  // Save a mood entry for any specific date
+  static Future<void> saveMoodEntryForDate({
+    required DateTime date,
+    required double moodValue,
+    required List<String> emotions,
+    required String note,
+  }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final today = DateTime.now();
       
       final moodEntry = MoodEntry(
-        date: DateTime(today.year, today.month, today.day), // Normalize to start of day
+        date: DateTime(date.year, date.month, date.day), // Normalize to start of day
         moodValue: moodValue,
         emotions: emotions,
         note: note,
@@ -92,11 +108,11 @@ class MoodDataService {
       // Get existing entries
       final existingEntries = await getAllMoodEntries();
       
-      // Remove any existing entry for today and add the new one
+      // Remove any existing entry for this date and add the new one
       existingEntries.removeWhere((entry) => 
-        entry.date.year == today.year &&
-        entry.date.month == today.month &&
-        entry.date.day == today.day
+        entry.date.year == date.year &&
+        entry.date.month == date.month &&
+        entry.date.day == date.day
       );
       existingEntries.add(moodEntry);
 
