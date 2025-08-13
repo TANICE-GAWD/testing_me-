@@ -10,13 +10,13 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // User data
+  
   String _userName = 'Sarah Johnson';
   String _userEmail = 'sarah.johnson@email.com';
   String _userBio = 'On a journey to better mental health and wellness.';
   DateTime _memberSince = DateTime(2024, 12, 1);
   
-  // Stats data
+  
   int _dayStreak = 7;
   int _moodLogs = 42;
   int _achievements = 5;
@@ -24,14 +24,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _bestStreak = 7;
   int _insightsSaved = 12;
   
-  // Goals data
+  
   Map<String, double> _wellnessGoals = {
     'Daily Mood Check-in': 0.8,
     'Weekly Reflection': 0.6,
     'Mindfulness Practice': 0.4,
   };
   
-  // Controllers for editing
+  
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
@@ -62,13 +62,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _userEmail = prefs.getString('user_email') ?? 'sarah.johnson@email.com';
         _userBio = prefs.getString('user_bio') ?? 'On a journey to better mental health and wellness.';
         
-        // Load member since date
+        
         final memberSinceString = prefs.getString('member_since');
         if (memberSinceString != null) {
           _memberSince = DateTime.parse(memberSinceString);
         }
         
-        // Load stats
+        
         _dayStreak = prefs.getInt('day_streak') ?? 7;
         _moodLogs = prefs.getInt('mood_logs') ?? 42;
         _achievements = prefs.getInt('achievements') ?? 5;
@@ -76,7 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _bestStreak = prefs.getInt('best_streak') ?? 7;
         _insightsSaved = prefs.getInt('insights_saved') ?? 12;
         
-        // Load goals
+        
         _wellnessGoals['Daily Mood Check-in'] = prefs.getDouble('goal_mood_checkin') ?? 0.8;
         _wellnessGoals['Weekly Reflection'] = prefs.getDouble('goal_weekly_reflection') ?? 0.6;
         _wellnessGoals['Mindfulness Practice'] = prefs.getDouble('goal_mindfulness') ?? 0.4;
@@ -84,7 +84,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isLoading = false;
       });
       
-      // Update controllers
+      
       _nameController.text = _userName;
       _emailController.text = _userEmail;
       _bioController.text = _userBio;
@@ -108,7 +108,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await prefs.setString('user_bio', _userBio);
       await prefs.setString('member_since', _memberSince.toIso8601String());
       
-      // Save stats
+      
       await prefs.setInt('day_streak', _dayStreak);
       await prefs.setInt('mood_logs', _moodLogs);
       await prefs.setInt('achievements', _achievements);
@@ -116,7 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await prefs.setInt('best_streak', _bestStreak);
       await prefs.setInt('insights_saved', _insightsSaved);
       
-      // Save goals
+      
       await prefs.setDouble('goal_mood_checkin', _wellnessGoals['Daily Mood Check-in'] ?? 0.0);
       await prefs.setDouble('goal_weekly_reflection', _wellnessGoals['Weekly Reflection'] ?? 0.0);
       await prefs.setDouble('goal_mindfulness', _wellnessGoals['Mindfulness Practice'] ?? 0.0);
@@ -197,7 +197,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _cancelEditing() {
     setState(() {
       _isEditing = false;
-      // Reset controllers to original values
+      
       _nameController.text = _userName;
       _emailController.text = _userEmail;
       _bioController.text = _userBio;
@@ -205,7 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
-    // Validate input
+    
     if (_nameController.text.trim().isEmpty) {
       NotificationService.showError(context, 'Name cannot be empty');
       return;
@@ -216,7 +216,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    // Update data
+    
     setState(() {
       _userName = _nameController.text.trim();
       _userEmail = _emailController.text.trim();
@@ -224,7 +224,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _isEditing = false;
     });
 
-    // Save to SharedPreferences
+    
     await _saveUserData();
   }
 
@@ -266,7 +266,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             
-            // Name field
+            
             if (_isEditing)
               TextField(
                 controller: _nameController,
@@ -288,7 +288,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             
             const SizedBox(height: 8),
             
-            // Email field
+            
             if (_isEditing)
               TextField(
                 controller: _emailController,
@@ -322,7 +322,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             
             const SizedBox(height: 16),
             
-            // Bio field
+            
             if (_isEditing)
               TextField(
                 controller: _bioController,
@@ -812,7 +812,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
       
-      // Reset to default values
+      
       setState(() {
         _userName = 'New User';
         _userEmail = 'user@email.com';
@@ -831,7 +831,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         };
       });
       
-      // Update controllers
+      
       _nameController.text = _userName;
       _emailController.text = _userEmail;
       _bioController.text = _userBio;

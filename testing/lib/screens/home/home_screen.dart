@@ -49,28 +49,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header with greeting
+                  
                   _buildHeader(context),
                   const SizedBox(height: 24),
                   
-                  // Quick mood check
+                  
                   const MoodQuickCheck(),
                   const SizedBox(height: 20),
                   
-                  // Wellness streak
+                  
                   const WellnessStreakCard(),
                   const SizedBox(height: 20),
                   
-                  // Daily insight
+                  
                   const DailyInsightCard(),
                   const SizedBox(height: 20),
                   
-                  // Today's overview
+                  
                   _buildTodayOverview(context),
                   
                   const SizedBox(height: 20),
                   
-                  // Quick actions
+                  
                   _buildQuickActions(context),
                 ],
               ),
@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Future<void> _refreshData() async {
     await Future.delayed(const Duration(seconds: 1));
     setState(() {
-      // Simulate data refresh
+      
       _currentMoodLogs = DateTime.now().millisecondsSinceEpoch % 5 + 1;
       _currentStreak = DateTime.now().millisecondsSinceEpoch % 10 + 5;
     });
@@ -213,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   ) {
     return GestureDetector(
       onTap: () {
-        // Navigate to relevant screen
+        
         if (label.contains('Mood')) {
           DefaultTabController.of(context)?.animateTo(1);
         } else if (label.contains('Streak')) {

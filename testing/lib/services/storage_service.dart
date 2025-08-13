@@ -7,7 +7,7 @@ class StorageService {
   static const String _settingsKey = 'app_settings';
   static const String _chatHistoryKey = 'chat_history';
 
-  // Mood logging
+  
   static Future<void> saveMoodLog(Map<String, dynamic> moodLog) async {
     final prefs = await SharedPreferences.getInstance();
     final existingLogs = await getMoodLogs();
@@ -27,7 +27,7 @@ class StorageService {
     return jsonList.cast<Map<String, dynamic>>();
   }
 
-  // Wellness streak
+  
   static Future<void> updateWellnessStreak(int streak) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_streakKey, streak);
@@ -38,7 +38,7 @@ class StorageService {
     return prefs.getInt(_streakKey) ?? 0;
   }
 
-  // App settings
+  
   static Future<void> saveSettings(Map<String, dynamic> settings) async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = jsonEncode(settings);
@@ -62,13 +62,13 @@ class StorageService {
     return jsonDecode(jsonString);
   }
 
-  // Chat history
+  
   static Future<void> saveChatMessage(Map<String, String> message) async {
     final prefs = await SharedPreferences.getInstance();
     final existingHistory = await getChatHistory();
     existingHistory.add(message);
     
-    // Keep only last 50 messages
+    
     if (existingHistory.length > 50) {
       existingHistory.removeRange(0, existingHistory.length - 50);
     }
@@ -92,13 +92,13 @@ class StorageService {
     await prefs.remove(_chatHistoryKey);
   }
 
-  // Clear all data
+  
   static Future<void> clearAllData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
 
-  // Export data
+  
   static Future<Map<String, dynamic>> exportAllData() async {
     return {
       'moodLogs': await getMoodLogs(),

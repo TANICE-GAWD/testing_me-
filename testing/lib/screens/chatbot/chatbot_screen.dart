@@ -81,7 +81,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       ),
       body: Column(
         children: [
-          // Disclaimer banner
+          
           Container(
             width: double.infinity,
             margin: const EdgeInsets.all(16),
@@ -128,7 +128,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ),
           ),
           
-          // Chat messages
+          
           Expanded(
             child: _messages.length <= 1 
                 ? ConversationStarters(onStarterTapped: _handleStarterTapped)
@@ -147,7 +147,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   ),
           ),
           
-          // Loading indicator
+          
           if (_isLoading)
             Container(
               margin: const EdgeInsets.all(16),
@@ -200,7 +200,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               ),
             ),
           
-          // Message input
+          
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -301,7 +301,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final message = _messageController.text.trim();
     if (message.isEmpty || _isLoading) return;
 
-    // Add user message
+    
     setState(() {
       _messages.add({
         'role': 'user',
@@ -315,7 +315,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _scrollToBottom();
 
     try {
-      // Get bot response with timeout
+      
       final response = await ChatbotService.getChatResponse(message, _messages)
           .timeout(const Duration(seconds: 30));
       
@@ -331,7 +331,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         
         _scrollToBottom();
         
-        // Show helpful feedback
+        
         if (response.length > 200) {
           _showResponseActions();
         }

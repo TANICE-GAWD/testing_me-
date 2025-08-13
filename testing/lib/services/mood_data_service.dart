@@ -64,14 +64,14 @@ class MoodDataService {
   }
 
   static Color _getMoodColor(double moodValue) {
-    if (moodValue <= 1.5) return const Color(0xFFFFCDD2); // Light red
-    if (moodValue <= 2.5) return const Color(0xFFFFE0B2); // Light orange
-    if (moodValue <= 3.5) return const Color(0xFFF0F4C3); // Light lime
-    if (moodValue <= 4.5) return const Color(0xFFC8E6C9); // Light green
-    return const Color(0xFFA5D6A7); // Green
+    if (moodValue <= 1.5) return const Color(0xFFFFCDD2); 
+    if (moodValue <= 2.5) return const Color(0xFFFFE0B2); 
+    if (moodValue <= 3.5) return const Color(0xFFF0F4C3); 
+    if (moodValue <= 4.5) return const Color(0xFFC8E6C9); 
+    return const Color(0xFFA5D6A7); 
   }
 
-  // Save a mood entry for today
+  
   static Future<void> saveMoodEntry({
     required double moodValue,
     required List<String> emotions,
@@ -86,7 +86,7 @@ class MoodDataService {
     );
   }
 
-  // Save a mood entry for any specific date
+  
   static Future<void> saveMoodEntryForDate({
     required DateTime date,
     required double moodValue,
@@ -97,7 +97,7 @@ class MoodDataService {
       final prefs = await SharedPreferences.getInstance();
       
       final moodEntry = MoodEntry(
-        date: DateTime(date.year, date.month, date.day), // Normalize to start of day
+        date: DateTime(date.year, date.month, date.day), 
         moodValue: moodValue,
         emotions: emotions,
         note: note,
@@ -105,10 +105,10 @@ class MoodDataService {
         moodLabel: _getMoodLabel(moodValue),
       );
 
-      // Get existing entries
+      
       final existingEntries = await getAllMoodEntries();
       
-      // Remove any existing entry for this date and add the new one
+      
       existingEntries.removeWhere((entry) => 
         entry.date.year == date.year &&
         entry.date.month == date.month &&
@@ -116,7 +116,7 @@ class MoodDataService {
       );
       existingEntries.add(moodEntry);
 
-      // Save back to SharedPreferences
+      
       final jsonList = existingEntries.map((entry) => entry.toJson()).toList();
       await prefs.setString(_moodEntriesKey, jsonEncode(jsonList));
       
@@ -126,7 +126,7 @@ class MoodDataService {
     }
   }
 
-  // Get all mood entries
+  
   static Future<List<MoodEntry>> getAllMoodEntries() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -142,7 +142,7 @@ class MoodDataService {
     }
   }
 
-  // Get mood entry for a specific date
+  
   static Future<MoodEntry?> getMoodEntryForDate(DateTime date) async {
     try {
       final allEntries = await getAllMoodEntries();
@@ -161,7 +161,7 @@ class MoodDataService {
     }
   }
 
-  // Get mood entries for a specific month
+  
   static Future<Map<int, MoodEntry>> getMoodEntriesForMonth(int year, int month) async {
     try {
       final allEntries = await getAllMoodEntries();
@@ -180,13 +180,13 @@ class MoodDataService {
     }
   }
 
-  // Get mood entry for today
+  
   static Future<MoodEntry?> getTodaysMoodEntry() async {
     final today = DateTime.now();
     return await getMoodEntryForDate(today);
   }
 
-  // Delete mood entry for a specific date
+  
   static Future<void> deleteMoodEntry(DateTime date) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -206,7 +206,7 @@ class MoodDataService {
     }
   }
 
-  // Get mood statistics
+  
   static Future<Map<String, dynamic>> getMoodStatistics() async {
     try {
       final allEntries = await getAllMoodEntries();
@@ -220,11 +220,11 @@ class MoodDataService {
         };
       }
 
-      // Calculate average mood
+      
       final totalMood = allEntries.fold<double>(0, (sum, entry) => sum + entry.moodValue);
       final averageMood = totalMood / allEntries.length;
 
-      // Calculate current streak
+      
       int currentStreak = 0;
       final today = DateTime.now();
       DateTime checkDate = DateTime(today.year, today.month, today.day);
@@ -239,8 +239,8 @@ class MoodDataService {
         }
       }
 
-      // Calculate longest streak (simplified version)
-      int longestStreak = currentStreak; // For now, just use current streak
+      
+      int longestStreak = currentStreak; 
 
       return {
         'totalEntries': allEntries.length,
@@ -259,7 +259,7 @@ class MoodDataService {
     }
   }
 
-  // Clear all mood data
+  
   static Future<void> clearAllMoodData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -270,7 +270,7 @@ class MoodDataService {
     }
   }
 
-  // Get mood color for calendar display
+  
   static Color getMoodColor(double moodValue) {
     return _getMoodColor(moodValue);
   }

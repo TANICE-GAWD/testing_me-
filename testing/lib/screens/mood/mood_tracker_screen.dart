@@ -341,7 +341,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
     });
 
     try {
-      // Save mood data using the service
+      
       await MoodDataService.saveMoodEntry(
         moodValue: _currentMoodValue,
         emotions: _selectedEmotions.toList(),
@@ -353,7 +353,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
           _isLogging = false;
         });
 
-        // Show success message with details
+        
         NotificationService.showSuccess(
           context,
           'Mood logged successfully!',
@@ -363,8 +363,8 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
           },
         );
 
-        // Don't clear form since user might want to update their mood later
-        // Instead, show that it's been saved
+        
+        
       }
     } catch (e) {
       if (mounted) {

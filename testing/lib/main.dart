@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'screens/main_navigation.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+import 'services/push_notification_service.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await PushNotificationService().init();
   runApp(const MindfulMeApp());
 }
 
