@@ -21,7 +21,7 @@ class _MainNavigationState extends State<MainNavigation> with TickerProviderStat
     const HomeScreen(),
     const MoodTrackerScreen(),
     const ChatbotScreen(),
-    const ProfileScreen(),
+    const YourJourneyScreen(),
     const SettingsScreen(),
   ];
 

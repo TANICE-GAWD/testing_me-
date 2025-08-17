@@ -1,4 +1,10 @@
+// lib/screens/settings/settings_screen.dart
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/notification_service.dart';
+import '../../services/push_notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -9,9 +15,46 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _dailyReminders = true;
-  bool _weeklyReports = true;
-  bool _dataBackup = false;
-  String _reminderTime = '9:00 AM';
+  TimeOfDay _reminderTime = const TimeOfDay(hour: 9, minute: 0);
+  bool _isLoading = true;
+
+  final PushNotificationService _pushNotificationService = PushNotificationService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _dailyReminders = prefs.getBool('dailyRemindersEnabled') ?? true;
+      final hour = prefs.getInt('reminderHour') ?? 9;
+      final minute = prefs.getInt('reminderMinute') ?? 0;
+      _reminderTime = TimeOfDay(hour: hour, minute: minute);
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _updateReminderSettings(bool isEnabled, TimeOfDay time) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('dailyRemindersEnabled', isEnabled);
+    await prefs.setInt('reminderHour', time.hour);
+    await prefs.setInt('reminderMinute', time.minute);
+
+    if (isEnabled) {
+      await _pushNotificationService.scheduleDailyReminder(time);
+      if (mounted) {
+        NotificationService.showInfo(context, 'Reminders are now set for ${time.format(context)}.');
+      }
+    } else {
+      await _pushNotificationService.cancelAllNotifications();
+      if (mounted) {
+        NotificationService.showInfo(context, 'Daily reminders have been turned off.');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,20 +62,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: const Text('Settings'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _buildNotificationSettings(context),
-            const SizedBox(height: 20),
-            _buildPrivacySettings(context),
-            const SizedBox(height: 20),
-            _buildAppSettings(context),
-            const SizedBox(height: 20),
-            _buildSupportSection(context),
-          ],
-        ),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  _buildNotificationSettings(context),
+                  const SizedBox(height: 20),
+                  _buildSettingsAndSupport(context),
+                ],
+              ),
+            ),
     );
   }
 
@@ -46,7 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Row(
               children: [
                 Icon(
-                  Icons.notifications_rounded,
+                  Icons.notifications_active_outlined,
                   color: Theme.of(context).colorScheme.primary,
                   size: 20,
                 ),
@@ -59,42 +100,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 16),
             SwitchListTile(
-              title: const Text('Daily Mood Reminders'),
-              subtitle: const Text('Get gentle reminders to check in with yourself'),
+              title: const Text('Gentle Daily Reminders'),
+              subtitle: const Text('Get a kind nudge to check in'),
               value: _dailyReminders,
               onChanged: (value) {
                 setState(() {
                   _dailyReminders = value;
                 });
+                _updateReminderSettings(value, _reminderTime);
               },
             ),
-            if (_dailyReminders) ...[
+            if (_dailyReminders)
               ListTile(
                 title: const Text('Reminder Time'),
-                subtitle: Text(_reminderTime),
+                subtitle: Text(_reminderTime.format(context)),
                 trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () {
-                  _showTimePicker();
-                },
+                onTap: _showTimePicker,
               ),
-            ],
-            SwitchListTile(
-              title: const Text('Weekly Reports'),
-              subtitle: const Text('Receive weekly mood pattern summaries'),
-              value: _weeklyReports,
-              onChanged: (value) {
-                setState(() {
-                  _weeklyReports = value;
-                });
-              },
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPrivacySettings(BuildContext context) {
+  Widget _buildSettingsAndSupport(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -104,67 +133,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Row(
               children: [
                 Icon(
-                  Icons.privacy_tip_rounded,
+                  Icons.settings_outlined,
                   color: Theme.of(context).colorScheme.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Privacy & Data',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: const Text('Cloud Backup'),
-              subtitle: const Text('Securely backup your data to the cloud'),
-              value: _dataBackup,
-              onChanged: (value) {
-                setState(() {
-                  _dataBackup = value;
-                });
-              },
-            ),
-            ListTile(
-              title: const Text('Export Data'),
-              subtitle: const Text('Download your mood data'),
-              trailing: const Icon(Icons.download_rounded),
-              onTap: () {
-                _showExportDialog();
-              },
-            ),
-            ListTile(
-              title: const Text('Delete Account'),
-              subtitle: const Text('Permanently delete your account and data'),
-              trailing: const Icon(Icons.delete_rounded),
-              onTap: () {
-                _showDeleteAccountDialog();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppSettings(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.settings_rounded,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'App Settings',
+                  'Settings & Support',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ],
@@ -174,89 +149,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('Theme'),
               subtitle: const Text('System default'),
               trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                _showThemeDialog();
-              },
-            ),
-            ListTile(
-              title: const Text('Language'),
-              subtitle: const Text('English'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                _showLanguageDialog();
-              },
-            ),
-            ListTile(
-              title: const Text('App Integrations'),
-              subtitle: const Text('Connect with other wellness apps'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                _showIntegrationsDialog();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSupportSection(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.help_rounded,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Support',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              title: const Text('Help Center'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                _showHelpDialog();
-              },
-            ),
-            ListTile(
-              title: const Text('Contact Support'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                _showContactDialog();
-              },
+              onTap: () => NotificationService.showInfo(context, 'Theme options are coming soon!'),
             ),
             ListTile(
               title: const Text('Privacy Policy'),
               trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                _showPrivacyDialog();
-              },
+              onTap: () => NotificationService.showInfo(context, 'You can view our privacy policy on our website.'),
             ),
             ListTile(
-              title: const Text('Terms of Service'),
+              title: const Text('Help Center'),
               trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => NotificationService.showInfo(context, 'Our help center is coming soon.'),
+            ),
+
+            // --- NEW BUTTON ADDED HERE ---
+            ListTile(
+              leading: const Icon(Icons.notification_add_rounded),
+              title: const Text('Send Test Notification'),
+              subtitle: const Text('Check if notifications are working'),
               onTap: () {
-                _showTermsDialog();
+                _pushNotificationService.showTestNotification();
+                NotificationService.showInfo(
+                  context,
+                  'Test notification triggered. It should appear shortly.',
+                );
               },
+            ),
+            // --- END OF NEW BUTTON ---
+
+            ListTile(
+              title: const Text('Account Management'),
+              subtitle: const Text('Export or delete your data'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => _navigateToAccountManagement(context),
             ),
             const SizedBox(height: 16),
             Center(
               child: Text(
                 'MindfulMe v1.0.0',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                ),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
               ),
             ),
           ],
@@ -268,302 +201,84 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showTimePicker() {
     showTimePicker(
       context: context,
-      initialTime: const TimeOfDay(hour: 9, minute: 0),
+      initialTime: _reminderTime,
     ).then((time) {
       if (time != null) {
         setState(() {
-          _reminderTime = time.format(context);
+          _reminderTime = time;
         });
+        _updateReminderSettings(true, time);
       }
     });
   }
 
-  void _showThemeDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Choose Theme'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<String>(
-              title: const Text('System Default'),
-              value: 'system',
-              groupValue: 'system',
-              onChanged: (value) => Navigator.pop(context),
-            ),
-            RadioListTile<String>(
-              title: const Text('Light'),
-              value: 'light',
-              groupValue: 'system',
-              onChanged: (value) => Navigator.pop(context),
-            ),
-            RadioListTile<String>(
-              title: const Text('Dark'),
-              value: 'dark',
-              groupValue: 'system',
-              onChanged: (value) => Navigator.pop(context),
-            ),
-          ],
-        ),
+  void _navigateToAccountManagement(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const AccountManagementScreen(),
       ),
     );
   }
+}
 
-  void _showIntegrationsDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('App Integrations'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.calendar_today),
-              title: const Text('Google Calendar'),
-              subtitle: const Text('Not connected'),
-              trailing: TextButton(
-                onPressed: () {},
-                child: const Text('Connect'),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.fitness_center),
-              title: const Text('Apple Health'),
-              subtitle: const Text('Not connected'),
-              trailing: TextButton(
-                onPressed: () {},
-                child: const Text('Connect'),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
+
+class AccountManagementScreen extends StatelessWidget {
+  const AccountManagementScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Account Management'),
       ),
-    );
-  }
-
-  void _showExportDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Export Data'),
-        content: const Text(
-          'Your mood data will be exported as a CSV file. This includes all your mood logs, notes, and insights.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Data export started')),
-              );
-            },
-            child: const Text('Export'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLanguageDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Language'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<String>(
-              title: const Text('English'),
-              value: 'en',
-              groupValue: 'en',
-              onChanged: (value) => Navigator.pop(context),
-            ),
-            RadioListTile<String>(
-              title: const Text('Spanish'),
-              value: 'es',
-              groupValue: 'en',
-              onChanged: (value) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Language support coming soon!')),
-                );
-              },
-            ),
-            RadioListTile<String>(
-              title: const Text('French'),
-              value: 'fr',
-              groupValue: 'en',
-              onChanged: (value) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Language support coming soon!')),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showHelpDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Help Center'),
-        content: const SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Frequently Asked Questions:', style: TextStyle(fontWeight: FontWeight.bold)),
-              SizedBox(height: 8),
-              Text('Q: How do I log my mood?\nA: Go to the Mood tab and select your current feeling.'),
-              SizedBox(height: 8),
-              Text('Q: Can I edit past mood entries?\nA: Yes, tap on any day in the calendar view.'),
-              SizedBox(height: 8),
-              Text('Q: Is my data private?\nA: Yes, all data is stored securely and privately.'),
-              SizedBox(height: 16),
-              Text('Need more help? Contact our support team!'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Got it'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showContactDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Contact Support'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(Icons.email),
-              title: Text('Email Support'),
-              subtitle: Text('support@mindfulme.app'),
-            ),
-            ListTile(
-              leading: Icon(Icons.chat),
-              title: Text('Live Chat'),
-              subtitle: Text('Available 24/7'),
-            ),
-            ListTile(
-              leading: Icon(Icons.phone),
-              title: Text('Phone Support'),
-              subtitle: Text('1-800-MINDFUL'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPrivacyDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Privacy Policy'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'Your privacy is important to us. This app:\n\n'
-            '• Stores your data locally on your device\n'
-            '• Uses encryption for cloud backups\n'
-            '• Never shares personal information\n'
-            '• Allows you to export or delete your data\n\n'
-            'For the full privacy policy, visit our website.',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Understood'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showTermsDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Terms of Service'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'By using MindfulMe, you agree to:\n\n'
-            '• Use the app for personal wellness only\n'
-            '• Not share your account with others\n'
-            '• Understand this is not medical advice\n'
-            '• Seek professional help when needed\n\n'
-            'For complete terms, visit our website.',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Understood'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteAccountDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Account'),
-        content: const Text(
-          'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Account deletion cancelled. We\'re glad you\'re staying!'),
-                  backgroundColor: Colors.green,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Manage Your Data',
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+                const SizedBox(height: 8),
+                Text(
+                  'Here you can export or permanently delete your account and all associated data.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const Divider(height: 32),
+                ListTile(
+                  leading: const Icon(Icons.download_rounded),
+                  title: const Text('Export My Data'),
+                  subtitle: const Text('Download all your wellness data as a CSV file.'),
+                  onTap: () => NotificationService.showInfo(context, 'Data export feature coming soon!'),
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  leading: Icon(Icons.delete_forever_rounded, color: Theme.of(context).colorScheme.error),
+                  title: Text('Delete Account', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  subtitle: const Text('This action is permanent and cannot be undone.'),
+                  onTap: () {
+                    NotificationService.showConfirmDialog(
+                      context,
+                      title: 'Delete Your Account?',
+                      message: 'This will permanently delete all your wellness data. This action is irreversible.',
+                      confirmText: 'Yes, Delete',
+                      isDestructive: true,
+                    ).then((confirmed) {
+                      if (confirmed == true) {
+                        NotificationService.showSuccess(context, 'Your account has been deleted.');
+                        Navigator.of(context).pop();
+                      }
+                    });
+                  },
+                ),
+              ],
             ),
-            child: const Text('Delete'),
           ),
-        ],
+        ),
       ),
     );
   }

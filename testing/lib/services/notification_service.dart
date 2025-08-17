@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 
 class NotificationService {
+  
   static void showSuccess(BuildContext context, String message, {String? action, VoidCallback? onAction}) {
+    final theme = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 20),
+            Icon(Icons.check_circle_outline_rounded, color: theme.colorScheme.onSecondary, size: 20),
             const SizedBox(width: 8),
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: theme.colorScheme.secondary, 
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         action: action != null && onAction != null
             ? SnackBarAction(
                 label: action,
-                textColor: Colors.white,
+                textColor: theme.colorScheme.onSecondary,
                 onPressed: onAction,
               )
             : null,
@@ -26,23 +28,24 @@ class NotificationService {
   }
 
   static void showError(BuildContext context, String message, {String? action, VoidCallback? onAction}) {
+    final theme = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error, color: Colors.white, size: 20),
+            Icon(Icons.error_outline_rounded, color: theme.colorScheme.onError, size: 20),
             const SizedBox(width: 8),
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: Colors.red,
+        backgroundColor: theme.colorScheme.error, 
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 4),
         action: action != null && onAction != null
             ? SnackBarAction(
                 label: action,
-                textColor: Colors.white,
+                textColor: theme.colorScheme.onError,
                 onPressed: onAction,
               )
             : null,
@@ -51,46 +54,23 @@ class NotificationService {
   }
 
   static void showInfo(BuildContext context, String message, {String? action, VoidCallback? onAction}) {
+    final theme = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.info, color: Colors.white, size: 20),
+            Icon(Icons.info_outline_rounded, color: theme.colorScheme.onPrimary, size: 20),
             const SizedBox(width: 8),
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: theme.colorScheme.primary, 
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         action: action != null && onAction != null
             ? SnackBarAction(
                 label: action,
-                textColor: Colors.white,
-                onPressed: onAction,
-              )
-            : null,
-      ),
-    );
-  }
-
-  static void showWarning(BuildContext context, String message, {String? action, VoidCallback? onAction}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.warning, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: Colors.orange,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        action: action != null && onAction != null
-            ? SnackBarAction(
-                label: action,
-                textColor: Colors.white,
+                textColor: theme.colorScheme.onPrimary,
                 onPressed: onAction,
               )
             : null,
@@ -106,6 +86,7 @@ class NotificationService {
     String cancelText = 'Cancel',
     bool isDestructive = false,
   }) {
+    final theme = Theme.of(context);
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -119,72 +100,16 @@ class NotificationService {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
+            
             style: isDestructive
                 ? ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
+                    backgroundColor: theme.colorScheme.error,
+                    foregroundColor: theme.colorScheme.onError,
                   )
                 : null,
             child: Text(confirmText),
           ),
         ],
-      ),
-    );
-  }
-
-  static void showBottomSheet(
-    BuildContext context, {
-    required String title,
-    required Widget content,
-    List<Widget>? actions,
-  }) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 16),
-                    content,
-                    if (actions != null) ...[
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: actions,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
