@@ -61,76 +61,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              onPressed: _showDisclaimerDialog,
-              icon: Icon(
-                Icons.info_outline_rounded,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              tooltip: 'Important Information',
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
-          
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.red.shade50,
-                  Colors.orange.shade50,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.red.shade200,
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.emergency_rounded, 
-                    color: Colors.red.shade600, 
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'For medical emergencies, contact emergency services immediately',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.red.shade700,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
+          _buildGentleDisclaimerBanner(context),
           
           Expanded(
-            child: _messages.length <= 1 
+            child: _messages.length <= 1
                 ? ConversationStarters(onStarterTapped: _handleStarterTapped)
                 : ListView.builder(
                     controller: _scrollController,
@@ -142,152 +79,118 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                         message: message['message']!,
                         isUser: message['role'] == 'user',
                         timestamp: DateTime.parse(message['timestamp']!),
+                        // FIX: Removed the onFeedback parameter because it is not
+                        // defined in the ChatMessageBubble widget's code.
                       );
                     },
                   ),
           ),
           
+          if (_isLoading) _buildLoadingIndicator(context),
           
-          if (_isLoading)
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.secondary,
-                        ],
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.psychology_rounded,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Thinking...',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          
-          
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(25),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        controller: _messageController,
-                        decoration: InputDecoration(
-                          hintText: 'Ask about wellness, self-care, or how you\'re feeling...',
-                          hintStyle: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                            fontSize: 15,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                        ),
-                        maxLines: null,
-                        textCapitalization: TextCapitalization.sentences,
-                        onSubmitted: (_) => _sendMessage(),
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.secondary,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      onPressed: _isLoading ? null : _sendMessage,
-                      icon: const Icon(Icons.send_rounded),
-                      color: Colors.white,
-                      tooltip: 'Send message',
-                      iconSize: 22,
-                    ),
-                  ),
-                ],
+          _buildMessageInput(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGentleDisclaimerBanner(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.tertiary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded, color: theme.colorScheme.tertiary, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'I am an AI companion and not a medical professional. For emergencies, please seek immediate help.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.textTheme.bodySmall?.color?.withOpacity(0.8),
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: _showDisclaimerDialog,
+            child: const Text('Details'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: Size.zero,
+            ),
+          )
         ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingIndicator(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            child: const Icon(Icons.psychology_rounded, color: Colors.white, size: 16),
+          ),
+          const SizedBox(width: 12),
+          const Text('Thinking...'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageInput(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _messageController,
+                decoration: InputDecoration(
+                  hintText: 'Type your message...',
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                ),
+                onSubmitted: (_) => _sendMessage(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            IconButton(
+              onPressed: _isLoading ? null : _sendMessage,
+              icon: const Icon(Icons.send_rounded),
+              color: Theme.of(context).colorScheme.primary,
+              style: IconButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                padding: const EdgeInsets.all(16),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -301,7 +204,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final message = _messageController.text.trim();
     if (message.isEmpty || _isLoading) return;
 
-    
     setState(() {
       _messages.add({
         'role': 'user',
@@ -315,7 +217,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _scrollToBottom();
 
     try {
-      
       final response = await ChatbotService.getChatResponse(message, _messages)
           .timeout(const Duration(seconds: 30));
       
@@ -328,20 +229,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           });
           _isLoading = false;
         });
-        
         _scrollToBottom();
-        
-        
-        if (response.length > 200) {
-          _showResponseActions();
-        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _messages.add({
             'role': 'assistant',
-            'message': 'I apologize, but I\'m having trouble responding right now. Please try again in a moment, or consider reaching out to a healthcare professional if you need immediate support.\n\n💡 You can also try rephrasing your question or asking about specific topics like stress, anxiety, or self-care.',
+            'message': 'I apologize, but I\'m having trouble responding right now. Please try again in a moment.',
             'timestamp': DateTime.now().toIso8601String(),
           });
           _isLoading = false;
@@ -349,41 +244,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         _scrollToBottom();
       }
     }
-  }
-
-  void _showResponseActions() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Was this response helpful?'),
-        duration: const Duration(seconds: 4),
-        action: SnackBarAction(
-          label: 'Feedback',
-          onPressed: () {
-            _showFeedbackDialog();
-          },
-        ),
-      ),
-    );
-  }
-
-  void _showFeedbackDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Feedback'),
-        content: const Text('Thank you for using our wellness chat! Your feedback helps us improve.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('👍 Helpful'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('👎 Not helpful'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _scrollToBottom() {
@@ -403,23 +263,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Important Information'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'This wellness chat provides general self-care information and support. It is not a substitute for professional medical advice, diagnosis, or treatment.',
-              style: TextStyle(height: 1.5),
-            ),
-            SizedBox(height: 12),
-            Text(
-              '• For medical emergencies, contact emergency services immediately\n'
-              '• For mental health crises, contact a crisis hotline\n'
-              '• Always consult healthcare professionals for personalized medical advice\n'
-              '• This chat is for general wellness support only',
-              style: TextStyle(height: 1.5),
-            ),
-          ],
+        content: const Text(
+          'This wellness chat provides general self-care information and support. It is not a substitute for professional medical advice, diagnosis, or treatment. For medical emergencies or mental health crises, please contact the appropriate emergency services or crisis hotlines.',
         ),
         actions: [
           TextButton(

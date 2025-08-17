@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart'; 
 
 class ChatMessageBubble extends StatelessWidget {
   final String message;
   final bool isUser;
   final DateTime timestamp;
+  
+  final Function(bool isHelpful)? onFeedback;
 
   const ChatMessageBubble({
     super.key,
     required this.message,
     required this.isUser,
     required this.timestamp,
+    this.onFeedback, 
   });
 
   @override
@@ -26,81 +30,91 @@ class ChatMessageBubble extends StatelessWidget {
             const SizedBox(width: 8),
           ],
           Flexible(
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.75,
-              ),
-              child: Column(
-                crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                children: [
-                  GestureDetector(
-                    onLongPress: () => _showMessageOptions(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isUser 
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.only(
-                          topLeft: const Radius.circular(16),
-                          topRight: const Radius.circular(16),
-                          bottomLeft: Radius.circular(isUser ? 16 : 4),
-                          bottomRight: Radius.circular(isUser ? 4 : 16),
-                        ),
-                        border: isUser ? null : Border.all(
-                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-                        ),
+            child: Column(
+              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                
+                GestureDetector(
+                  onTap: () => _copyMessage(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isUser
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(16),
+                        topRight: const Radius.circular(16),
+                        bottomLeft: Radius.circular(isUser ? 16 : 4),
+                        bottomRight: Radius.circular(isUser ? 4 : 16),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (!isUser)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 4),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.psychology_rounded,
-                                    size: 14,
+                      border: isUser ? null : Border.all(
+                        color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (!isUser)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.psychology_rounded,
+                                  size: 14,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: 4),
+                                
+                                Text(
+                                  'Your Companion', 
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                     color: Theme.of(context).colorScheme.primary,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Wellness Assistant',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Theme.of(context).colorScheme.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          Text(
-                            message,
-                            style: TextStyle(
-                              color: isUser 
-                                  ? Colors.white
-                                  : Theme.of(context).colorScheme.onSurface,
-                              fontSize: 16,
-                              height: 1.4,
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        Text(
+                          message,
+                          style: TextStyle(
+                            color: isUser
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.onSurface,
+                            fontSize: 16,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      
+                      _formatTimestamp(timestamp),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatTimestamp(timestamp),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
-              ),
+                    
+                    if (!isUser && onFeedback != null) ...[
+                      const SizedBox(width: 8),
+                      _buildFeedbackButton(context, isHelpful: true),
+                      const SizedBox(width: 4),
+                      _buildFeedbackButton(context, isHelpful: false),
+                    ]
+                  ],
+                ),
+              ],
             ),
           ),
           if (isUser) ...[
@@ -117,7 +131,7 @@ class ChatMessageBubble extends StatelessWidget {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         shape: BoxShape.circle,
       ),
       child: Icon(
@@ -133,7 +147,7 @@ class ChatMessageBubble extends StatelessWidget {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
+        color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
         shape: BoxShape.circle,
       ),
       child: Icon(
@@ -144,85 +158,38 @@ class ChatMessageBubble extends StatelessWidget {
     );
   }
 
-  String _formatTimestamp(DateTime timestamp) {
-    final now = DateTime.now();
-    final difference = now.difference(timestamp);
-
-    if (difference.inMinutes < 1) {
-      return 'Just now';
-    } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    } else {
-      return '${timestamp.day}/${timestamp.month}';
-    }
+  Widget _buildFeedbackButton(BuildContext context, {required bool isHelpful}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => onFeedback!(isHelpful),
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Icon(
+            isHelpful ? Icons.thumb_up_alt_outlined : Icons.thumb_down_alt_outlined,
+            size: 14,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+          ),
+        ),
+      ),
+    );
   }
 
-  void _showMessageOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.copy_rounded),
-              title: const Text('Copy message'),
-              onTap: () {
-                Clipboard.setData(ClipboardData(text: message));
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Message copied to clipboard'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              },
-            ),
-            if (!isUser)
-              ListTile(
-                leading: const Icon(Icons.thumb_up_rounded),
-                title: const Text('Helpful response'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Thank you for your feedback!'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-              ),
-            if (!isUser)
-              ListTile(
-                leading: const Icon(Icons.thumb_down_rounded),
-                title: const Text('Not helpful'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Thank you for your feedback. We\'ll work to improve!'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-              ),
-            const SizedBox(height: 8),
-          ],
-        ),
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    if (now.difference(timestamp).inDays == 0) {
+      return DateFormat.jm().format(timestamp); 
+    }
+    return DateFormat('MMM d, yyyy').format(timestamp); 
+  }
+
+  void _copyMessage(BuildContext context) {
+    Clipboard.setData(ClipboardData(text: message));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Message copied to clipboard'),
+        duration: Duration(seconds: 2),
       ),
     );
   }
