@@ -6,12 +6,15 @@ class MoodEntryDialog extends StatefulWidget {
   final DateTime date;
   final MoodEntry? existingEntry;
   final VoidCallback? onSaved;
+  // RECOMMENDATION: Add the missing onDeleted parameter
+  final VoidCallback? onDeleted; 
 
   const MoodEntryDialog({
     super.key,
     required this.date,
     this.existingEntry,
     this.onSaved,
+    this.onDeleted, // Added to constructor
   });
 
   @override
@@ -65,7 +68,7 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Row(
@@ -82,14 +85,14 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
                         Text(
                           isEditing ? 'Edit Mood Entry' : 'Add Mood Entry',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                         Text(
                           '${monthNames[widget.date.month - 1]} ${widget.date.day}, ${widget.date.year}',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                          ),
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                              ),
                         ),
                       ],
                     ),
@@ -109,15 +112,10 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Mood Scale
                     _buildMoodSection(),
                     const SizedBox(height: 24),
-                    
-                    // Emotions
                     _buildEmotionsSection(),
                     const SizedBox(height: 24),
-                    
-                    // Notes
                     _buildNotesSection(),
                   ],
                 ),
@@ -132,33 +130,39 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
                 border: Border(
                   top: BorderSide(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
                   ),
                 ),
               ),
               child: Row(
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _isSaving ? null : () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                  // RECOMMENDATION: Add the "Remove Entry" button
+                  if (isEditing && widget.onDeleted != null)
+                    TextButton(
+                      onPressed: widget.onDeleted,
+                      child: Text(
+                        'Remove Entry',
+                        style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      ),
                     ),
+                  const Spacer(),
+                  OutlinedButton(
+                    onPressed: _isSaving ? null : () => Navigator.pop(context),
+                    child: const Text('Cancel'),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isSaving ? null : _saveMoodEntry,
-                      child: _isSaving
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : Text(isEditing ? 'Update' : 'Save'),
-                    ),
+                  ElevatedButton(
+                    onPressed: _isSaving ? null : _saveMoodEntry,
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(isEditing ? 'Update' : 'Save'),
                   ),
                 ],
               ),
@@ -176,12 +180,10 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
         Text(
           'How were you feeling?',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 16),
-        
-        // Mood options
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -192,16 +194,13 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
             _buildMoodOption('😄', 'Very Good', 5),
           ],
         ),
-        
         const SizedBox(height: 16),
-        
-        // Mood slider
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: Theme.of(context).colorScheme.primary,
-            inactiveTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+            inactiveTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
             thumbColor: Theme.of(context).colorScheme.primary,
-            overlayColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+            overlayColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
           ),
@@ -218,14 +217,13 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
             },
           ),
         ),
-        
         Center(
           child: Text(
             _getMoodLabel(_currentMoodValue),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ),
       ],
@@ -234,7 +232,6 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
 
   Widget _buildMoodOption(String emoji, String label, int value) {
     final isSelected = _currentMoodValue.round() == value;
-    
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -249,11 +246,11 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: isSelected 
-                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
                     : Colors.grey.shade100,
                 shape: BoxShape.circle,
-                border: isSelected 
+                border: isSelected
                     ? Border.all(
                         color: Theme.of(context).colorScheme.primary,
                         width: 2,
@@ -262,7 +259,7 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
               ),
               child: Center(
                 child: Text(
-                  emoji, 
+                  emoji,
                   style: TextStyle(
                     fontSize: isSelected ? 28 : 24,
                   ),
@@ -273,11 +270,9 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
             Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected 
-                    ? Theme.of(context).colorScheme.primary
-                    : null,
-              ),
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    color: isSelected ? Theme.of(context).colorScheme.primary : null,
+                  ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -293,15 +288,15 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
         Text(
           'What emotions were you experiencing?',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 8),
         Text(
           'Select all that apply (optional)',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
         ),
         const SizedBox(height: 16),
         Wrap(
@@ -321,7 +316,7 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
                   }
                 });
               },
-              selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+              selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
               checkmarkColor: Theme.of(context).colorScheme.primary,
             );
           }).toList(),
@@ -337,15 +332,15 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
         Text(
           'Add a note (optional)',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 8),
         Text(
           'What happened that day? How did you feel?',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -383,6 +378,7 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
     });
 
     try {
+      // CORRECTED: Changed to the correct method name that accepts a 'date' parameter.
       await MoodDataService.saveMoodEntryForDate(
         date: widget.date,
         moodValue: _currentMoodValue,
@@ -394,12 +390,11 @@ class _MoodEntryDialogState extends State<MoodEntryDialog> {
         Navigator.pop(context);
         NotificationService.showSuccess(
           context,
-          widget.existingEntry != null 
+          widget.existingEntry != null
               ? 'Mood entry updated successfully!'
               : 'Mood entry saved successfully!',
         );
         
-        // Call the callback to refresh the calendar
         widget.onSaved?.call();
       }
     } catch (e) {

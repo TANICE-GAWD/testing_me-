@@ -33,6 +33,9 @@ class PushNotificationService {
 
     await _plugin.initialize(settings);
 
+    // Android 13+ runtime notification permission
+    await _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+
     // Cancel any existing notifications to avoid duplicates after hot restart
     await _plugin.cancelAll();
 
@@ -67,7 +70,8 @@ class PushNotificationService {
         ),
         androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time, // ensures exact time scheduling
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: null // one-off
       );
     }
   }

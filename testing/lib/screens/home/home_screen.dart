@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/mood_quick_check.dart';
-import '../../widgets/wellness_streak_card.dart';
+import '../../widgets/wellness_streak_card.dart'; 
 import '../../widgets/daily_insight_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -13,8 +13,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+
+  // State for minimal mode
+  bool _isMinimalMode = false;
+
+  int _currentJourneyDays = 7;
   int _currentMoodLogs = 2;
-  int _currentStreak = 7;
 
   @override
   void initState() {
@@ -35,6 +39,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  /// Simulates refreshing data from a source.
+  Future<void> _refreshData() async {
+    await Future.delayed(const Duration(seconds: 1));
+    if (mounted) {
+      setState(() {
+        _currentMoodLogs = DateTime.now().second % 5 + 1;
+        _currentJourneyDays = DateTime.now().second % 10 + 5;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,29 +64,39 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  
                   _buildHeader(context),
                   const SizedBox(height: 24),
                   
-                  
                   const MoodQuickCheck(),
                   const SizedBox(height: 20),
-                  
-                  
-                  const WellnessStreakCard(),
-                  const SizedBox(height: 20),
-                  
-                  
-                  const DailyInsightCard(),
-                  const SizedBox(height: 20),
-                  
-                  
-                  _buildTodayOverview(context),
-                  
-                  const SizedBox(height: 20),
-                  
-                  
-                  _buildQuickActions(context),
+
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    child: AnimatedOpacity(
+                      opacity: _isMinimalMode ? 0.0 : 1.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: _isMinimalMode
+                          ? const SizedBox.shrink()
+                          : Column(
+                              key: const ValueKey('full_view'),
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Corrected to use the new journey card
+                                const WellnessJourneyCard(),
+                                const SizedBox(height: 20),
+                                
+                                const DailyInsightCard(),
+                                const SizedBox(height: 20),
+                                
+                                _buildTodayOverview(context),
+                                const SizedBox(height: 20),
+                                
+                                _buildQuickActions(context),
+                              ],
+                            ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -81,19 +106,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Future<void> _refreshData() async {
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {
-      
-      _currentMoodLogs = DateTime.now().millisecondsSinceEpoch % 5 + 1;
-      _currentStreak = DateTime.now().millisecondsSinceEpoch % 10 + 5;
-    });
-  }
-
+  // RECOMMENDATION: Re-introducing the styled container for a warmer feel.
   Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final hour = DateTime.now().hour;
-    String greeting;
-    String emoji;
+    final String greeting;
+    final String emoji;
+
     if (hour < 12) {
       greeting = 'Good morning';
       emoji = '🌅';
@@ -102,61 +122,67 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       emoji = '☀️';
     } else {
       greeting = 'Good evening';
-      emoji = '🌙';
+      emoji = '�';
     }
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(25),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-            Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
-            Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.05),
+            colorScheme.primary.withOpacity(0.1),
+            colorScheme.secondary.withOpacity(0.1),
+            colorScheme.tertiary.withOpacity(0.05),
           ],
         ),
-        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+            color: colorScheme.primary.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                emoji,
-                style: const TextStyle(fontSize: 32),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$greeting, Sarah!',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    Text(
-                      'How are you feeling today?',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+          Text(emoji, style: const TextStyle(fontSize: 32)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$greeting, Sarah!',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.primary,
+                  ),
                 ),
-              ),
-            ],
+                Text(
+                  'How are you feeling today?',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Minimal mode toggle button is now inside the styled container.
+          IconButton(
+            icon: Icon(
+              _isMinimalMode ? Icons.unfold_more_rounded : Icons.unfold_less_rounded,
+              color: colorScheme.onBackground.withOpacity(0.6),
+            ),
+            onPressed: () {
+              setState(() {
+                _isMinimalMode = !_isMinimalMode;
+              });
+            },
+            tooltip: _isMinimalMode ? 'Show all' : 'Show less',
           ),
         ],
       ),
@@ -190,9 +216,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 Expanded(
                   child: _buildOverviewItem(
                     context,
-                    'Streak Days',
-                    _currentStreak.toString(),
-                    Icons.local_fire_department_rounded,
+                    'Journey Days',
+                    _currentJourneyDays.toString(),
+                    Icons.hiking_rounded, 
                     Theme.of(context).colorScheme.secondary,
                   ),
                 ),
@@ -213,11 +239,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   ) {
     return GestureDetector(
       onTap: () {
-        
         if (label.contains('Mood')) {
           DefaultTabController.of(context)?.animateTo(1);
-        } else if (label.contains('Streak')) {
-          _showStreakDetails(context);
+        } else if (label.contains('Journey')) { 
+          _showJourneyDetails(context);
         }
       },
       child: AnimatedContainer(
@@ -227,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           gradient: LinearGradient(
             colors: [
               backgroundColor,
-              backgroundColor.withValues(alpha: 0.7),
+              backgroundColor.withOpacity(0.7),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -235,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: backgroundColor.withValues(alpha: 0.3),
+              color: backgroundColor.withOpacity(0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -246,35 +271,35 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
+                color: Colors.white.withOpacity(0.9),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
-                icon, 
-                size: 28, 
+                icon,
+                size: 28,
                 color: backgroundColor,
               ),
             ),
             const SizedBox(height: 12),
             TweenAnimationBuilder<int>(
-              tween: IntTween(begin: 0, end: int.parse(value)),
+              tween: IntTween(begin: 0, end: int.tryParse(value) ?? 0),
               duration: const Duration(milliseconds: 800),
               builder: (context, animatedValue, child) {
                 return Text(
                   animatedValue.toString(),
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
                 );
               },
             ),
             Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
+                    color: Colors.white.withOpacity(0.9),
+                    fontWeight: FontWeight.w600,
+                  ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -282,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
+  
   Widget _buildQuickActions(BuildContext context) {
     return Card(
       child: Padding(
@@ -323,7 +348,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
+  
   Widget _buildActionButton(
     BuildContext context,
     String label,
@@ -336,9 +361,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
+          color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Column(
           children: [
@@ -347,9 +372,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -358,33 +383,34 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _showStreakDetails(BuildContext context) {
+  void _showJourneyDetails(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Icon(
-              Icons.local_fire_department_rounded,
+              Icons.hiking_rounded,
               color: Theme.of(context).colorScheme.secondary,
             ),
             const SizedBox(width: 8),
-            const Text('Wellness Streak'),
+            const Text('Your Wellness Journey'),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '$_currentStreak Days',
+              '$_currentJourneyDays Days',
               style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                color: Theme.of(context).colorScheme.secondary,
-                fontWeight: FontWeight.bold,
-              ),
+                    color: Theme.of(context).colorScheme.secondary,
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16),
             const Text(
-              'Amazing! You\'ve been consistent with your wellness routine. Keep up the great work!',
+              'You\'ve dedicated this many days to self-care. Every step counts, no matter how small. Be proud of your progress!',
               textAlign: TextAlign.center,
             ),
           ],

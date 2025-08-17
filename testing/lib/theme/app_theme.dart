@@ -2,27 +2,29 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   
-  static const Color primaryOrange = Color(0xFFFF6028); 
-  static const Color secondaryYellow = Color(0xFFFFCC28); 
-  static const Color accentGreen = Color(0xFFC6FF28); 
-  static const Color pureWhite = Color(0xFFFFFFFF); 
+  
+  static const Color primaryOrange = Color(0xFF5A96E3); 
+  static const Color secondaryYellow = Color(0xFF78C2AD); 
+  static const Color accentGreen = Color(0xFFB4A6E5); 
+  
+  static const Color pureWhite = Color(0xFFFFFFFF);
   static const Color lightGray = Color(0xFFF8F9FA); 
-  static const Color darkGray = Color(0xFF343A40); 
+  static const Color darkGray = Color(0xFF212529); 
   static const Color mediumGray = Color(0xFF6C757D); 
 
   
-  static const Color joyfulYellow = Color(0xFFFFCC28); 
-  static const Color energeticOrange = Color(0xFFFF6028); 
-  static const Color calmGreen = Color(0xFFC6FF28); 
-  static const Color peacefulBlue = Color(0xFF74C0FC); 
-  static const Color reflectiveGray = Color(0xFFE9ECEF); 
+  static const Color joyfulYellow = Color(0xFF78C2AD); 
+  static const Color energeticOrange = Color(0xFF5A96E3); 
+  static const Color calmGreen = Color(0xFF86B38A);     
+  static const Color peacefulBlue = Color(0xFF5A96E3);   
+  static const Color reflectiveGray = Color(0xFFADB5BD); 
 
 
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryOrange,
+        seedColor: primaryOrange, 
         brightness: Brightness.light,
         primary: primaryOrange,
         secondary: secondaryYellow,
@@ -68,7 +70,7 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 4,
-        shadowColor: Colors.black.withValues(alpha: 0.1),
+        shadowColor: Colors.black.withOpacity(0.08), 
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -77,10 +79,10 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryOrange,
+          backgroundColor: primaryOrange, 
           foregroundColor: pureWhite,
           elevation: 3,
-          shadowColor: primaryOrange.withValues(alpha: 0.3),
+          shadowColor: primaryOrange.withOpacity(0.3), 
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
@@ -93,7 +95,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primaryOrange,
+          foregroundColor: primaryOrange, 
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -118,7 +120,7 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: pureWhite,
-        selectedItemColor: primaryOrange,
+        selectedItemColor: primaryOrange, 
         unselectedItemColor: mediumGray,
         elevation: 8,
         type: BottomNavigationBarType.fixed,
@@ -130,7 +132,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryOrange,
+        seedColor: primaryOrange, 
         brightness: Brightness.dark,
         primary: primaryOrange,
         secondary: secondaryYellow,
@@ -170,7 +172,7 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 4,
-        shadowColor: Colors.black.withValues(alpha: 0.3),
+        shadowColor: Colors.black.withOpacity(0.3),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -179,10 +181,10 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryOrange,
+          backgroundColor: primaryOrange, 
           foregroundColor: pureWhite,
           elevation: 3,
-          shadowColor: primaryOrange.withValues(alpha: 0.3),
+          shadowColor: primaryOrange.withOpacity(0.3),
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),

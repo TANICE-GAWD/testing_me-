@@ -5,7 +5,11 @@ class DailyInsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Card(
+      // The card itself already uses theme colors, so no changes are needed here.
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -16,19 +20,21 @@ class DailyInsightCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade100,
+                    // RECOMMENDATION 1: Use theme colors instead of hardcoded blue.
+                    color: colorScheme.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.lightbulb_rounded,
-                    color: Colors.blue.shade600,
+                    // RECOMMENDATION 1: Use theme colors.
+                    color: colorScheme.primary,
                     size: 20,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   'Daily Insight',
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: theme.textTheme.titleLarge,
                 ),
               ],
             ),
@@ -36,10 +42,12 @@ class DailyInsightCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                // RECOMMENDATION 1: Use theme colors.
+                color: colorScheme.primary.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.blue.shade100,
+                  // RECOMMENDATION 1: Use theme colors.
+                  color: colorScheme.primary.withOpacity(0.2),
                   width: 1,
                 ),
               ),
@@ -48,52 +56,66 @@ class DailyInsightCard extends StatelessWidget {
                 children: [
                   Text(
                     '💙 Mindful Moment',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
+                      // Using the primary color for the title makes it feel more integrated.
+                      color: colorScheme.primary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Take three deep breaths and notice how your body feels right now. This simple practice can help ground you in the present moment.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       height: 1.5,
+                      // Using a slightly less prominent color for the body text.
+                      color: theme.textTheme.bodyLarge?.color?.withOpacity(0.8),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
+                  // RECOMMENDATION 2 & 3: Simplify the call to action and use softer language.
                   Row(
                     children: [
-                      TextButton.icon(
-                        onPressed: () {
-                          _showBreathingExercise(context);
-                        },
-                        icon: const Icon(Icons.air_rounded, size: 16),
-                        label: const Text('Try it now'),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            _showBreathingExercise(context);
+                          },
+                          icon: const Icon(Icons.air_rounded, size: 18),
+                          label: const Text('Start Guided Breath'),
+                          style: ElevatedButton.styleFrom(
+                            // Use a softer, secondary color for less pressure.
+                            backgroundColor: colorScheme.secondary.withOpacity(0.8),
+                            foregroundColor: theme.colorScheme.onSecondary,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
-                      TextButton.icon(
+                      const SizedBox(width: 8),
+                      // Secondary actions are now subtle icons.
+                      IconButton(
                         onPressed: () {
                           _openWellnessChat(context);
                         },
-                        icon: const Icon(Icons.chat_bubble_rounded, size: 16),
-                        label: const Text('Ask chat'),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
+                        icon: Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          color: colorScheme.secondary,
                         ),
+                        tooltip: 'Ask chat for more tips',
                       ),
-                      const Spacer(),
                       IconButton(
                         onPressed: () {
                           _saveInsight(context);
                         },
-                        icon: const Icon(Icons.bookmark_border_rounded, size: 20),
+                        icon: Icon(
+                          Icons.bookmark_border_rounded,
+                          color: colorScheme.secondary,
+                        ),
                         tooltip: 'Save insight',
                       ),
                     ],
@@ -108,6 +130,7 @@ class DailyInsightCard extends StatelessWidget {
   }
 
   void _showBreathingExercise(BuildContext context) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -118,10 +141,11 @@ class DailyInsightCard extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.air_rounded,
               size: 48,
-              color: Colors.blue,
+              // Use theme color in the dialog.
+              color: theme.colorScheme.primary,
             ),
             const SizedBox(height: 16),
             const Text(
@@ -149,7 +173,6 @@ class DailyInsightCard extends StatelessWidget {
   }
 
   void _openWellnessChat(BuildContext context) {
-    // Show a dialog suggesting to use the chat feature
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -171,7 +194,8 @@ class DailyInsightCard extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Insight saved to your collection'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        // Use a theme color for the SnackBar.
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),

@@ -20,7 +20,7 @@ class _MoodQuickCheckState extends State<MoodQuickCheck> with TickerProviderStat
     MoodOption(1, '😢', 'Struggling', AppTheme.reflectiveGray),
     MoodOption(2, '😔', 'Low', AppTheme.peacefulBlue),
     MoodOption(3, '😐', 'Okay', AppTheme.mediumGray),
-    MoodOption(4, '😊', 'Good', AppTheme.joyfulYellow),
+    MoodOption(4, '😊', 'Good', AppTheme.calmGreen),
     MoodOption(5, '😄', 'Great', AppTheme.energeticOrange),
   ];
 
