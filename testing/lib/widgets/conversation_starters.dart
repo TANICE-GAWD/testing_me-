@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import '../services/chatbot_service.dart';
 
-class ConversationStarters extends StatelessWidget {
+class ConversationStarters extends StatefulWidget {
   final Function(String)? onStarterTapped;
-  
+
   const ConversationStarters({
     super.key,
     this.onStarterTapped,
   });
+
+  @override
+  State<ConversationStarters> createState() => _ConversationStartersState();
+}
+
+class _ConversationStartersState extends State<ConversationStarters> {
+  
+  bool _isTipsExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +26,7 @@ class ConversationStarters extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Welcome section
+          
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -27,8 +35,8 @@ class ConversationStarters extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                  Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
+                  Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.1),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
@@ -39,7 +47,7 @@ class ConversationStarters extends StatelessWidget {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -52,16 +60,16 @@ class ConversationStarters extends StatelessWidget {
                 Text(
                   'Your Wellness Companion',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                        fontWeight: FontWeight.w600,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'I\'m here to provide general wellness advice and emotional support. Feel free to share how you\'re feeling or ask about self-care tips.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    height: 1.5,
-                  ),
+                        height: 1.5,
+                      ),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -70,12 +78,12 @@ class ConversationStarters extends StatelessWidget {
           
           const SizedBox(height: 24),
           
-          // Conversation starters
+          
           Text(
             'Popular topics to explore:',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           
           const SizedBox(height: 16),
@@ -84,12 +92,12 @@ class ConversationStarters extends StatelessWidget {
           
           const SizedBox(height: 24),
           
-          // Quick tips section
+          
           _buildQuickTipsSection(context),
           
           const SizedBox(height: 24),
           
-          // Disclaimer
+          
           _buildDisclaimerSection(context),
         ],
       ),
@@ -111,7 +119,7 @@ class ConversationStarters extends StatelessWidget {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
               ),
             ),
             child: Row(
@@ -120,7 +128,7 @@ class ConversationStarters extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -134,14 +142,14 @@ class ConversationStarters extends StatelessWidget {
                   child: Text(
                     starter,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
+                          fontWeight: FontWeight.w500,
+                        ),
                   ),
                 ),
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 16,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 ),
               ],
             ),
@@ -151,64 +159,83 @@ class ConversationStarters extends StatelessWidget {
     );
   }
 
+  
   Widget _buildQuickTipsSection(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
+        color: theme.colorScheme.secondary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.blue.shade100,
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.lightbulb_rounded,
-                color: Colors.blue.shade600,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Quick Wellness Tips',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.blue.shade700,
+          InkWell(
+            onTap: () {
+              setState(() {
+                _isTipsExpanded = !_isTipsExpanded;
+              });
+            },
+            child: Row(
+              children: [
+                Icon(
+                  Icons.lightbulb_outline_rounded,
+                  color: theme.colorScheme.secondary,
+                  size: 20,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '• Take 3 deep breaths when feeling overwhelmed\n'
-            '• Stay hydrated throughout the day\n'
-            '• Take short breaks every hour\n'
-            '• Practice gratitude daily\n'
-            '• Connect with friends and family regularly',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              height: 1.6,
-              color: Colors.blue.shade700,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Quick Wellness Tips',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.secondary,
+                        ),
+                  ),
+                ),
+                Icon(
+                  _isTipsExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                  color: theme.colorScheme.secondary,
+                ),
+              ],
             ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _isTipsExpanded
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: Text(
+                      '• Take 3 deep breaths when feeling overwhelmed\n'
+                      '• Stay hydrated throughout the day\n'
+                      '• Take short breaks every hour\n'
+                      '• Practice gratitude daily\n'
+                      '• Connect with friends and family regularly',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        height: 1.6,
+                        color: theme.colorScheme.secondary,
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
     );
   }
 
+  
   Widget _buildDisclaimerSection(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: theme.colorScheme.onSurface.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.orange.shade100,
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,16 +243,16 @@ class ConversationStarters extends StatelessWidget {
           Row(
             children: [
               Icon(
-                Icons.info_rounded,
-                color: Colors.orange.shade600,
+                Icons.info_outline_rounded,
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
                 size: 20,
               ),
               const SizedBox(width: 8),
               Text(
-                'Important Notice',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                'A Gentle Reminder', 
+                style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: Colors.orange.shade700,
+                  color: theme.colorScheme.onSurface.withOpacity(0.8),
                 ),
               ),
             ],
@@ -233,9 +260,9 @@ class ConversationStarters extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'This chat provides general wellness information only. For medical emergencies or mental health crises, please contact emergency services or a mental health professional immediately.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            style: theme.textTheme.bodySmall?.copyWith(
               height: 1.5,
-              color: Colors.orange.shade700,
+              color: theme.colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
         ],
@@ -261,15 +288,8 @@ class ConversationStarters extends StatelessWidget {
   }
 
   void _sendStarterMessage(BuildContext context, String message) {
-    if (onStarterTapped != null) {
-      onStarterTapped!(message);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Starting conversation: "$message"'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+    if (widget.onStarterTapped != null) {
+      widget.onStarterTapped!(message);
     }
   }
 }
